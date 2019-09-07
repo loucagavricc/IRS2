@@ -28,3 +28,4 @@ buzzing\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 buzzing\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 buzzing\main.o: ../Inc/tim.h
 buzzing\main.o: ../Inc/gpio.h
+buzzing\main.o: ../Inc/buzzer.h

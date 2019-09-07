@@ -22,6 +22,7 @@
 #include "main.h"
 #include "tim.h"
 #include "gpio.h"
+#include "buzzer.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -47,7 +48,6 @@
 
 /* USER CODE BEGIN PV */
 
-extern TIM_HandleTypeDef htim1;
 
 /* USER CODE END PV */
 
@@ -55,51 +55,21 @@ extern TIM_HandleTypeDef htim1;
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim);
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
-void toggle_pwm(void);
-void play_sound(uint8_t source_of_call);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	buzz(1);
+}
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	play_sound(0);
-	toggle_pwm();
-}
-
-void play_sound(uint8_t source_of_call)
-{
-	static uint8_t state_of_playing = 0;
-	
-	switch (state_of_playing)
-	{
-		case 0:
-			//start timer2
-			break;
-		case 1:
-			//stop timer2 if source is timer2
-			break;
-	}
-}
-
-void toggle_pwm(void)
-{
-	static uint8_t timer_status = 0;
-	
-	if (timer_status == 0)
-	{
-		timer_status = 1;
-		//start pwm
-		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-	}
-	else
-	{
-		timer_status = 0;
-		//stop pwm
-		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
-	}
+	buzz(0);
 }
 
 /* USER CODE END 0 */

@@ -5,6 +5,7 @@
 "buzzing\tim.o"
 "buzzing\stm32f1xx_it.o"
 "buzzing\stm32f1xx_hal_msp.o"
+"buzzing\buzzer.o"
 "buzzing\stm32f1xx_hal_gpio_ex.o"
 "buzzing\stm32f1xx_hal_tim.o"
 "buzzing\stm32f1xx_hal_tim_ex.o"
