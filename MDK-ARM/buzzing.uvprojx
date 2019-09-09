@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xB,USE_HAL_DRIVER,STM32F103xB</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;        ../Drivers/STM32F1xx_HAL_Driver/Inc;        ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;        ../Drivers/CMSIS/Device/ST/STM32F1xx/Include;        ../Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Inc;                           ../Drivers/STM32F1xx_HAL_Driver/Inc;                           ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;                           ../Drivers/CMSIS/Device/ST/STM32F1xx/Include;                           ../Drivers/CMSIS/Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -393,6 +393,31 @@
           <GroupName>Application/User</GroupName>
           <Files>
             <File>
+              <FileName>buzzer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Inc\buzzer.h</FilePath>
+            </File>
+            <File>
+              <FileName>enc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Inc\enc.h</FilePath>
+            </File>
+            <File>
+              <FileName>defines.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Inc\defines.h</FilePath>
+            </File>
+            <File>
+              <FileName>pc_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Src\pc_uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>pc_uart.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Inc\pc_uart.h</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Src/main.c</FilePath>
@@ -403,9 +428,19 @@
               <FilePath>../Src/gpio.c</FilePath>
             </File>
             <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/spi.c</FilePath>
+            </File>
+            <File>
               <FileName>tim.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Src/tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/usart.c</FilePath>
             </File>
             <File>
               <FileName>stm32f1xx_it.c</FileName>
@@ -420,12 +455,12 @@
             <File>
               <FileName>buzzer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\buzzer.c</FilePath>
+              <FilePath>..\Src\buzzer.c</FilePath>
             </File>
             <File>
-              <FileName>buzzer.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Inc\buzzer.h</FilePath>
+              <FileName>enc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Src\enc.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -438,6 +473,11 @@
               <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c</FilePath>
             </File>
             <File>
+              <FileName>stm32f1xx_hal_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_spi.c</FilePath>
+            </File>
+            <File>
               <FileName>stm32f1xx_hal_tim.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim.c</FilePath>
@@ -446,6 +486,11 @@
               <FileName>stm32f1xx_hal_tim_ex.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim_ex.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f1xx_hal_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_uart.c</FilePath>
             </File>
             <File>
               <FileName>stm32f1xx_hal.c</FileName>
