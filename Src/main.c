@@ -20,13 +20,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
 #include "tim.h"
 #include "gpio.h"
-#include "buzzer.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "buzzer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,8 +47,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
-
+extern SPI_HandleTypeDef hspi2;
+uint8_t pushed = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,6 +70,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	buzz(0);
+	pushed = 1;
 }
 
 /* USER CODE END 0 */
@@ -81,7 +82,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	
+	uint8_t data[2] = {0x0,0x1};
+	uint16_t data_16;
   /* USER CODE END 1 */
   
 
@@ -105,16 +107,35 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
+  MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-
+	
+	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi2, data, 2, 1000);
+	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_SET);
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		
     /* USER CODE END WHILE */
+		if(pushed == 1)
+		{
+			pushed = 0;
+			data_16 = data[1] | data[0]<<8;
+			if(data_16 < 0x8000) 
+				data_16 *= 2;
+			else
+				data_16 = 1;
+			data[0] = data_16>>8;
+			data[1] = data_16;
+			HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_RESET);
+			HAL_SPI_Transmit(&hspi2, data, 2, 1000);
+			HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_SET);
+			
+		}
 
     /* USER CODE BEGIN 3 */
   }
