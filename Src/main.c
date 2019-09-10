@@ -26,6 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "enc.h"
 #include "buzzer.h"
 /* USER CODE END Includes */
 
@@ -48,7 +49,6 @@
 
 /* USER CODE BEGIN PV */
 extern SPI_HandleTypeDef hspi2;
-uint8_t pushed = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,41 +62,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
+uint8_t pc_uart_error(void)
 {
-	buzz(1);
-}
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-	if(GPIO_Pin == ECA_Pin)
-	{
-		if (HAL_GPIO_ReadPin(ECB_GPIO_Port, ECB_Pin) == GPIO_PIN_SET)
-		{
-			if (HAL_GPIO_ReadPin(ECA_GPIO_Port, ECA_Pin) == GPIO_PIN_SET)
-			{
-				pushed = 2;
-			}
-			else
-			{
-				pushed = 1;
-			}
-		}
-		else
-		{
-			if (HAL_GPIO_ReadPin(ECA_GPIO_Port, ECA_Pin) == GPIO_PIN_SET)
-			{
-				pushed = 1;
-			}
-			else
-			{
-				pushed = 2;
-			}
-		}
-	}
-	
-	else
-		buzz(0);
+	return 0;
 }
 
 /* USER CODE END 0 */
@@ -108,8 +76,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t data[2] = {0x0,0x1};
-	uint16_t data_16 = 1;
+	uint8_t state = STATE_INIT;
+	uint32_t timestamp;
   /* USER CODE END 1 */
   
 
@@ -136,45 +104,65 @@ int main(void)
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
 	
-	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_RESET);
-	HAL_SPI_Transmit(&hspi2, data, 2, 1000);
-	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_SET);
-	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	
-  while (1)
-  {
-		if(pushed != 0)
+	while (1)
+	{
+		switch (state)			// MAIN STATE MACHINE
 		{
-			data_16 = data[1] | data[0]<<8;
-			if(pushed == 1)
-			{
-				if(data_16 < 0x8000) 
-					data_16 *= 2;
-				else
-					data_16 = 1;	
-			}
-			else
-			{
-				if(data_16 > 0x0001) 
-					data_16 /= 2;
-				else
-					data_16 = 0x8000;
-			}		
+			case STATE_INIT:	// STATE FOR INITIALIZATION
+				enc_init();
+				state = STATE_FIRST_LOCK;
 			
-			data[0] = data_16>>8;
-			data[1] = data_16;
-			HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_RESET);
-			HAL_SPI_Transmit(&hspi2, data, 2, 1000);
-			HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_SET);
+			case STATE_FIRST_LOCK:
+			case STATE_SECOND_LOCK:
+			case STATE_THIRD_LOCK:
+					
+				if (enc_event_check()) // check for button push or encoder rotation
+				{
+					enc_process_event();	// process event that happened
+					
+					if (enc_is_unlocked())
+						state++;
+					
+					else if (enc_is_blocked())
+					{
+						state = STATE_BLOCK;
+						HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
+						timestamp = HAL_GetTick();
+					}
+				}
 			
-			pushed = 0;	
+				break;
+				
+			case STATE_UNLOCK_1:
+				HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
+				timestamp = HAL_GetTick();
+				state = STATE_UNLOCK_2;
 			
+			case STATE_UNLOCK_2:
+				enc_flash_success();
+				if (HAL_GetTick() - timestamp > 5000)
+				{
+					state = STATE_INIT;
+					HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+				}				
+				break;
+			
+			case STATE_BLOCK:
+				enc_flash_fail();
+				if (HAL_GetTick() - timestamp > 5000)
+				{
+					state = STATE_INIT;
+					HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+				}
+				break;
 		}
-    /* USER CODE END WHILE */
+		
+	  /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -231,6 +219,8 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
 
+	pc_uart_error();
+	
   /* USER CODE END Error_Handler_Debug */
 }
 
