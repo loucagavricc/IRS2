@@ -108,7 +108,7 @@ void enc_process_event(void)
 			else
 				encoder_value = 1;
 		
-			encoder_rotated_right = 0;
+			encoder_rotated_right = FALSE;
 		}
 		else
 		{
@@ -117,7 +117,7 @@ void enc_process_event(void)
 			else
 				encoder_value = 0x8000;
 			
-			encoder_rotated_left = 0;
+			encoder_rotated_left = FALSE;
 		}		
 		
 		data[0] = encoder_value>>8;
@@ -141,7 +141,7 @@ void enc_process_event(void)
 			buzz_set_type(BUZZ_TYPE_FAIL);
 			buzz(SOURCE_NOT_IT);
 		}
-		button_pushed = 0;
+		button_pushed = FALSE;
 	}
 }
 
@@ -154,11 +154,12 @@ uint8_t check_valid_combination(uint16_t value)
 	  false_cnt = 0;
 		return TRUE;
 	}
-	if(++false_cnt > 5)
+	if(false_cnt >= 5)
 	{
 		blocked = TRUE;
 		false_cnt = 0;
 	}
+	false_cnt++;
 	return FALSE;
 }
 
