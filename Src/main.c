@@ -69,8 +69,34 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	buzz(0);
-	pushed = 1;
+	if(GPIO_Pin == ECA_Pin)
+	{
+		if (HAL_GPIO_ReadPin(ECB_GPIO_Port, ECB_Pin) == GPIO_PIN_SET)
+		{
+			if (HAL_GPIO_ReadPin(ECA_GPIO_Port, ECA_Pin) == GPIO_PIN_SET)
+			{
+				pushed = 2;
+			}
+			else
+			{
+				pushed = 1;
+			}
+		}
+		else
+		{
+			if (HAL_GPIO_ReadPin(ECA_GPIO_Port, ECA_Pin) == GPIO_PIN_SET)
+			{
+				pushed = 1;
+			}
+			else
+			{
+				pushed = 2;
+			}
+		}
+	}
+	
+	else
+		buzz(0);
 }
 
 /* USER CODE END 0 */
@@ -83,7 +109,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	uint8_t data[2] = {0x0,0x1};
-	uint16_t data_16;
+	uint16_t data_16 = 1;
   /* USER CODE END 1 */
   
 
@@ -118,27 +144,41 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	
   while (1)
   {
-    /* USER CODE END WHILE */
-		if(pushed == 1)
+		if(pushed != 0)
 		{
-			pushed = 0;
 			data_16 = data[1] | data[0]<<8;
-			if(data_16 < 0x8000) 
-				data_16 *= 2;
+			if(pushed == 1)
+			{
+				if(data_16 < 0x8000) 
+					data_16 *= 2;
+				else
+					data_16 = 1;	
+			}
 			else
-				data_16 = 1;
+			{
+				if(data_16 > 0x0001) 
+					data_16 /= 2;
+				else
+					data_16 = 0x8000;
+			}		
+			
 			data[0] = data_16>>8;
 			data[1] = data_16;
 			HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_RESET);
 			HAL_SPI_Transmit(&hspi2, data, 2, 1000);
 			HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_SET);
 			
+			pushed = 0;	
+			
 		}
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
+  
   /* USER CODE END 3 */
 }
 
