@@ -73,6 +73,9 @@ void Error_Handler(void);
 #define SPI2_NSS_GPIO_Port GPIOB
 #define PWM_BUZZ_Pin GPIO_PIN_8
 #define PWM_BUZZ_GPIO_Port GPIOA
+#define EC_BTN_Pin GPIO_PIN_10
+#define EC_BTN_GPIO_Port GPIOA
+#define EC_BTN_EXTI_IRQn EXTI15_10_IRQn
 #define ECA_Pin GPIO_PIN_11
 #define ECA_GPIO_Port GPIOA
 #define ECA_EXTI_IRQn EXTI15_10_IRQn
