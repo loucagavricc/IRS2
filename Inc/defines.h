@@ -41,4 +41,18 @@
 // MACROs for PC commands received by UART
 #define PC_CMD_START			(uint8_t) 0xA5
 
+//template for function commenting
+
+/**
+* a normal member taking two arguments and returning an integer value.
+* @param a an integer argument.
+* @param s a constant character pointer.
+* @see Javadoc_Test()
+* @see ~Javadoc_Test()
+* @see testMeToo()
+* @see publicVar()
+* @return The test results
+*/
+void debounce(uint8_t source_of_call);
+
 #endif

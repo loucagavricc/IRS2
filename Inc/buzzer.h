@@ -12,9 +12,6 @@
 #include "gpio.h"
 #include "defines.h"
 
-/*
-* Function for toggling PWM pin ON/OFF
-*/
 void toggle_pwm(void);
 void buzz_success(uint8_t source_of_call);
 void buzz_fail(uint8_t source_of_call);

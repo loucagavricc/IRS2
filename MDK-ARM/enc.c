@@ -7,7 +7,9 @@
 
 #include "enc.h"
 
+// external variables for peripherals
 extern SPI_HandleTypeDef hspi2;
+extern TIM_HandleTypeDef htim3;
 
 // variables that are used for communication between function calls
 static uint8_t button_pushed = FALSE;
@@ -23,6 +25,10 @@ static uint16_t encoder_value = 1;
 // main variable for storing lock code value
 static uint16_t lock_value = 0x01 << 13;
 
+
+/**
+* Flashing diodes on encoder click in successful rhythm
+*/
 void enc_flash_success(void)
 {
 	uint8_t data[] = {0xFF, 0xFF};
@@ -43,7 +49,9 @@ void enc_flash_success(void)
 	HAL_Delay(200);
 }
 
-
+/**
+* Flashing diodes on encoder click in fail rhythm
+*/
 void enc_flash_fail(void)
 {
 	uint8_t data[2] = {0x00, 0x00};
@@ -65,6 +73,9 @@ void enc_flash_fail(void)
 	
 }
 
+/**
+* Initializing encoder click and static variables
+*/
 void enc_init(void)
 {
 	uint8_t data[2] = {0x0,0x1};
@@ -82,6 +93,10 @@ void enc_init(void)
 	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_SET);
 }
 
+/**
+* Reading encoder value from static variable that is updated on events
+* @param value_of_encoder unsigned byte in range 1-16
+*/
 void enc_get_value(uint8_t *value_of_encoder)
 {
 	uint8_t val_det;
@@ -95,6 +110,10 @@ void enc_get_value(uint8_t *value_of_encoder)
 	}
 }
 
+/**
+* Checking for event stored in static variables updated on IRQ
+* @return TRUE (1) if event occured, FALSE (0) otherwise
+*/
 uint8_t enc_event_check(void)
 {
 	if(button_pushed == TRUE ||
@@ -107,6 +126,10 @@ uint8_t enc_event_check(void)
 		return FALSE;
 }
 
+
+/**
+* Processes event that occured - encoder rotation or button push
+*/
 void enc_process_event(void)
 {
 	uint8_t data[2] = {0,1};
@@ -156,20 +179,23 @@ void enc_process_event(void)
 		}
 		button_pushed = FALSE;
 	}
-	
-	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
-
+/**
+* Checking if encoder value is the same as lock combination 
+* @param value Unsigned word in one-hot coding (0x0001, 0x0002, 0x0004 ... 0x4000, 0x8000)
+* @return TRUE (1) on match with set lock combination, FALSE (0) otherwise
+*/
 uint8_t check_valid_combination(uint16_t value)
-{	
+{
+#warning "three-stage lock to be implemented"
 	if(lock_value == value)
 	{
 		unlocked = TRUE;
 	  false_cnt = 0;
 		return TRUE;
 	}
-	else if(false_cnt >= 5)
+	else if(false_cnt >= 4)
 	{
 		blocked = TRUE;
 		false_cnt = 0;
@@ -182,6 +208,10 @@ uint8_t check_valid_combination(uint16_t value)
 	}
 }
 
+/**
+* Check if unlocked flag is set
+* @return TRUE (1) or FALSE (0)
+*/
 uint8_t enc_is_unlocked(void)
 {
 	uint8_t retval = unlocked;
@@ -189,6 +219,10 @@ uint8_t enc_is_unlocked(void)
 	return retval;
 }
 
+/**
+* Check if blocked flag is set
+* @return TRUE (1) or FALSE (0)
+*/
 uint8_t enc_is_blocked(void)
 {
 	uint8_t retval = blocked;
@@ -196,7 +230,10 @@ uint8_t enc_is_blocked(void)
 	return retval;
 }
 
-
+/**
+* External interrupt callback
+* @param GPIO_Pin EXTI pin set that initiated interrupt
+*/
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	
@@ -228,7 +265,36 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	
 	if (GPIO_Pin == EC_BTN_Pin)	// encoder button is pushed
 	{
-		button_pushed = TRUE;
-		HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
+		debounce(SOURCE_NOT_IT);
 	}
+}
+
+/**
+* Debounce button on encoder click board
+* @param source_of_call SOURCE_IT if called from timer callback, SOURCE_NOT_IT otherwise
+*/
+void debounce(uint8_t source_of_call)
+{
+	
+	switch(source_of_call)
+	{
+		case SOURCE_NOT_IT:
+			
+			HAL_NVIC_ClearPendingIRQ(EXTI15_10_IRQn);
+			HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
+			HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_1);
+		
+			break;
+		
+		case SOURCE_IT:
+			
+			if (HAL_GPIO_ReadPin(EC_BTN_GPIO_Port, EC_BTN_Pin) == GPIO_PIN_SET)
+				button_pushed = 1;
+			HAL_TIM_OC_Stop_IT(&htim3, TIM_CHANNEL_1);
+			HAL_NVIC_ClearPendingIRQ(EXTI15_10_IRQn); //clear irqs
+			HAL_NVIC_EnableIRQ(EXTI15_10_IRQn); 			//enable irqs
+				
+			break;
+	}
+	
 }

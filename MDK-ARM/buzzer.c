@@ -7,11 +7,18 @@
 
 #include "buzzer.h"
 
+// extern peripheral structures
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim3;
 
+// buzzing type variable
 static uint8_t buzzing_type = BUZZ_TYPE_FAIL;
 
+/**
+* Drives buzzer click for signaling success
+* @param source_of_call SOURCE_IT if called from timer callback, SOURCE_NOT_IT otherwise
+*/
 void buzz_success(uint8_t source_of_call)
 {
 	static uint8_t state_of_playing = 0;
@@ -53,6 +60,8 @@ void buzz_success(uint8_t source_of_call)
 	}
 }
 
+
+
 void buzz_fail(uint8_t source_of_call)
 {
 	static uint8_t state_of_playing = 0;
@@ -71,7 +80,7 @@ void buzz_fail(uint8_t source_of_call)
 		case 8:
 			state_of_playing++;
 		
-			htim2.Init.Period = 500;			//set period of ~1s
+			htim2.Init.Period = 500;			//set period of ~100ms
 			if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
 			{
 				Error_Handler();
@@ -114,6 +123,10 @@ void buzz_fail(uint8_t source_of_call)
 	}
 }
 
+
+/**
+* Toggles pwm timer
+*/
 void toggle_pwm(void)
 {
 	static uint8_t timer_status = 0;
@@ -131,6 +144,11 @@ void toggle_pwm(void)
 }
 
 
+
+/**
+* Drives buzzer click depending on buzzing_type static variable
+* @param source SOURCE_IT if called from timer callback, SOURCE_NOT_IT otherwise
+*/
 void buzz(uint8_t source)
 {
 	if (buzzing_type == BUZZ_TYPE_SUCCESS)
@@ -139,12 +157,23 @@ void buzz(uint8_t source)
 		buzz_fail(source);
 }
 
+/**
+* Sets buzzing type
+* @param source BUZZ_TYPE_SUCCESS	or BUZZ_TYPE_FAIL determine played melody
+*/
 void buzz_set_type(uint8_t type)
 {
 	buzzing_type = type;
 }
 
+/**
+* Timer callback
+* @param htim Timer structure pointer that initiated callback
+*/
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	buzz(SOURCE_IT);
+	if (htim->Instance == htim2.Instance)
+		buzz(SOURCE_IT);
+	else if (htim->Instance == htim3.Instance)
+		debounce(SOURCE_IT);
 }
