@@ -17,6 +17,10 @@
 #define TRUE	(uint8_t) 1
 #define FALSE	(uint8_t) 0
 
+// MACROs for function return values
+#define RET_SUCCESS (uint8_t) 1
+#define RET_FAIL		(uint8_t) 0
+
 // MACROs for param defining if buzzing is called from IT callback
 #define SOURCE_NOT_IT		(uint8_t) 0
 #define SOURCE_IT				(uint8_t) 1
@@ -33,5 +37,8 @@
 #define STATE_UNLOCK_1		(uint8_t) 4
 #define STATE_UNLOCK_2		(uint8_t) 5
 #define STATE_BLOCK				(uint8_t) 6
+
+// MACROs for PC commands received by UART
+#define PC_CMD_START			(uint8_t) 0xA5
 
 #endif

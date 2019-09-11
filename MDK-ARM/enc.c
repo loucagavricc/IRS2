@@ -82,6 +82,19 @@ void enc_init(void)
 	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_SET);
 }
 
+void enc_get_value(uint8_t *value_of_encoder)
+{
+	uint8_t val_det;
+	
+	for( val_det = 0; val_det < 16; val_det++ )
+	{
+		if ( encoder_value == 0x1 << val_det)
+		{
+			*value_of_encoder = val_det;
+		}
+	}
+}
+
 uint8_t enc_event_check(void)
 {
 	if(button_pushed == TRUE ||
@@ -143,6 +156,8 @@ void enc_process_event(void)
 		}
 		button_pushed = FALSE;
 	}
+	
+	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
 
@@ -154,13 +169,17 @@ uint8_t check_valid_combination(uint16_t value)
 	  false_cnt = 0;
 		return TRUE;
 	}
-	if(false_cnt >= 5)
+	else if(false_cnt >= 5)
 	{
 		blocked = TRUE;
 		false_cnt = 0;
+		return FALSE;
 	}
-	false_cnt++;
-	return FALSE;
+	else
+	{
+		false_cnt++;
+		return FALSE;
+	}
 }
 
 uint8_t enc_is_unlocked(void)
@@ -180,6 +199,7 @@ uint8_t enc_is_blocked(void)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+	
 	if (GPIO_Pin == ECA_Pin) // encoder is rotated
 	{
 		if (HAL_GPIO_ReadPin(ECB_GPIO_Port, ECB_Pin) == GPIO_PIN_SET)
@@ -206,8 +226,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		}
 	}
 	
-	else if (GPIO_Pin == EC_BTN_Pin)	// encoder button is pushed
+	if (GPIO_Pin == EC_BTN_Pin)	// encoder button is pushed
 	{
 		button_pushed = TRUE;
+		HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
 	}
 }

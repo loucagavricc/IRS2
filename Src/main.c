@@ -22,12 +22,14 @@
 #include "main.h"
 #include "spi.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "enc.h"
 #include "buzzer.h"
+#include "pc_uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,6 +51,7 @@
 
 /* USER CODE BEGIN PV */
 extern SPI_HandleTypeDef hspi2;
+extern UART_HandleTypeDef huart2;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,11 +65,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-uint8_t pc_uart_error(void)
-{
-	return 0;
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -76,7 +74,7 @@ uint8_t pc_uart_error(void)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t state = STATE_INIT;
+	static uint8_t state = STATE_INIT;
 	uint32_t timestamp;
   /* USER CODE END 1 */
   
@@ -102,6 +100,7 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_SPI2_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 	
   /* USER CODE END 2 */
@@ -111,12 +110,21 @@ int main(void)
 	
 	while (1)
 	{
+		
 		switch (state)			// MAIN STATE MACHINE
 		{
 			case STATE_INIT:	// STATE FOR INITIALIZATION
 				enc_init();
-				state = STATE_FIRST_LOCK;
-			
+				if (pc_uart_rx_cmd_start())
+				{
+					state = STATE_FIRST_LOCK;
+				}
+				else
+				{
+					state = STATE_INIT;
+				}
+			break;
+				
 			case STATE_FIRST_LOCK:
 			case STATE_SECOND_LOCK:
 			case STATE_THIRD_LOCK:
@@ -149,7 +157,8 @@ int main(void)
 				{
 					state = STATE_INIT;
 					HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-				}				
+				}
+				
 				break;
 			
 			case STATE_BLOCK:
@@ -159,10 +168,11 @@ int main(void)
 					state = STATE_INIT;
 					HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 				}
+				
 				break;
 		}
 		
-	  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -218,8 +228,12 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-
-	pc_uart_error();
+	
+	while(1)
+	{
+		pc_uart_error();			// reset needed
+		HAL_Delay(1000);
+	}
 	
   /* USER CODE END Error_Handler_Debug */
 }
