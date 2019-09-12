@@ -7,79 +7,92 @@
 
 #include "pc_uart.h"
 
+#define TX_BUFFER_SIZE	60
+#define RX_BUFFER_SIZE	5
 
 extern UART_HandleTypeDef huart2;
 
-static uint8_t tx_buffer[5] = {0,0,0,0,0};
-static uint8_t tx_count = 0;
+static uint8_t tx_buffer[TX_BUFFER_SIZE];
 static uint8_t tx_busy = FALSE;
-static uint8_t rx_byte = 0;
+static uint8_t rx_buffer[RX_BUFFER_SIZE];
 
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if (++tx_count > 2)
-	{
-		tx_count = 0;
-	}
-	else
-	{
-		HAL_UART_Transmit_IT(&huart2, &tx_buffer[tx_count], 1);
-	}
+	tx_busy = FALSE;
 }
 
-uint8_t pc_uart_rx_cmd_start(void)
+uint8_t pc_uart_rx_cmd(void)
 {
-	HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
-	if( rx_byte == PC_CMD_START )
+	static uint8_t pc_uart_rx_cmd_state = 0;
+	
+	if( pc_uart_rx_cmd_state == 0 )
+		HAL_UART_Receive_IT(&huart2, rx_buffer, 1);
+	
+	pc_uart_rx_cmd_state = 1;
+	
+	if( rx_buffer[0] == PC_CMD_START )
 	{
-		rx_byte = 0;
-		return TRUE;
+		rx_buffer[0] = 0;
+		pc_uart_rx_cmd_state = 0;
+		return PC_CMD_START;
+	}
+	else if ( rx_buffer[0] == PC_CMD_LCKSET )
+	{
+		rx_buffer[0] = 0;
+		pc_uart_rx_cmd_state = 0;
+		return PC_CMD_LCKSET;
 	}
 	else
-		return TRUE;
-#warning "should return FALSE, but changed for debug purposes"
-		//return FALSE;
+		return FALSE;
 }
 
-void pc_uart_tx(uint8_t state)
+uint8_t pc_init_lock(void)
 {
-	switch (state)
+	static uint8_t pc_init_lock_state = 0;
+	
+	if(pc_init_lock_state == 0)
 	{
-		case STATE_INIT:
-			break;
-		
-		case STATE_FIRST_LOCK:
-		case STATE_SECOND_LOCK:
-		case STATE_THIRD_LOCK:
-			
-			break;
-		
-		case STATE_UNLOCK_1:
-			break;
-		
-		case STATE_UNLOCK_2:
-			break;
-		
-		case STATE_BLOCK:
-			break;
+		HAL_UART_Receive_IT(&huart2, &rx_buffer[1], 4);
+		pc_init_lock_state = 1;
 	}
+	if (rx_buffer[4] == PC_CMD_LCKSET_END)
+	{
+		set_lock_combination(0x01 << rx_buffer[1], 
+													0x01 << rx_buffer[2], 
+													0x01 << rx_buffer[3]);
+		pc_init_lock_state = 0;
+		return RET_SUCCESS;
+	}
+	return RET_FAIL;
+}
+
+uint8_t pc_uart_tx(char* string_to_send)
+{
+	if (strlen(string_to_send) > TX_BUFFER_SIZE)
+	{
+		Error_Handler();
+	}
+	
+	if (tx_busy)
+		return RET_FAIL;
+	
+	tx_busy = TRUE;
+	strcpy(tx_buffer, string_to_send);	
+	HAL_UART_Transmit_IT(&huart2, tx_buffer, strlen(string_to_send));
+	
+	return RET_SUCCESS;
 }
 
 uint8_t pc_uart_error(void)
 {
+	char error_string[] = "ERROR!\r\n";
 	if (tx_busy)
 		return RET_FAIL;
-	else
-	{
-		tx_buffer[0] = 'E';
-		tx_buffer[1] = 'R';
-		tx_buffer[2] = 'R';
-		
-		tx_busy = TRUE;
-		
-		HAL_UART_Transmit_IT(&huart2, tx_buffer, 1);
-		
-		return RET_SUCCESS;
-	}
+	
+	tx_busy = TRUE;
+	strcpy(tx_buffer, error_string);
+	HAL_UART_Transmit_IT(&huart2, tx_buffer, strlen(error_string));
+	
+	return RET_SUCCESS;
 }

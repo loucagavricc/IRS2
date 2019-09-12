@@ -76,6 +76,8 @@ int main(void)
   /* USER CODE BEGIN 1 */
 	static uint8_t state = STATE_INIT;
 	uint32_t timestamp;
+	char message[50];
+	uint8_t encoder_value;
   /* USER CODE END 1 */
   
 
@@ -103,7 +105,10 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-	
+	enc_leds_off();
+	pc_uart_tx("-----------\r\nLuka Gavric\r\nIRS2 \r\n-----------\r\n\r\n");
+	HAL_Delay(200);
+	pc_uart_tx("165 - start\r\n185 - set combination\r\n241 - end set comb\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -115,30 +120,51 @@ int main(void)
 		switch (state)			// MAIN STATE MACHINE
 		{
 			case STATE_INIT:	// STATE FOR INITIALIZATION
-				enc_init();
-				if (pc_uart_rx_cmd_start())
+				if (pc_uart_rx_cmd() == PC_CMD_START)
 				{
+					enc_init();
 					state = STATE_FIRST_LOCK;
+					pc_uart_tx("Lock 1: ");
+				}
+				else if(pc_uart_rx_cmd() == PC_CMD_LCKSET)
+				{
+					pc_uart_tx("Setting lock combination.\r\n");
+					state = STATE_SET_COMB;
 				}
 				else
-				{
 					state = STATE_INIT;
-				}
+				
 			break;
 				
-			case STATE_FIRST_LOCK:
+			case STATE_SET_COMB:
+				if (pc_init_lock())
+				{
+					state = STATE_INIT;
+					pc_uart_tx("Successful lock combination set\r\n");
+				}
+				break;
+				
+			case STATE_FIRST_LOCK:			// STATES FOR UNLOCKING LOCKS
 			case STATE_SECOND_LOCK:
 			case STATE_THIRD_LOCK:
 					
 				if (enc_event_check()) // check for button push or encoder rotation
 				{
-					enc_process_event();	// process event that happened
+					enc_process_event(state-STATE_FIRST_LOCK);	// process event that happened
+					
+					enc_get_value(&encoder_value);
+					sprintf(message, "\rLock %d: %2d", state-STATE_FIRST_LOCK, encoder_value);
+					pc_uart_tx(message);
 					
 					if (enc_is_unlocked())
+					{
 						state++;
+						pc_uart_tx(" successfully unlocked\r\n");
+					}
 					
 					else if (enc_is_blocked())
 					{
+						pc_uart_tx(" BLOCKED!\r\n");
 						state = STATE_BLOCK;
 						HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
 						timestamp = HAL_GetTick();
@@ -154,7 +180,7 @@ int main(void)
 			
 			case STATE_UNLOCK_2:
 				enc_flash_success();
-				if (HAL_GetTick() - timestamp > 5000)
+				if (HAL_GetTick() - timestamp > UNLOCK_PERIOD)
 				{
 					state = STATE_INIT;
 					HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
@@ -164,7 +190,7 @@ int main(void)
 			
 			case STATE_BLOCK:
 				enc_flash_fail();
-				if (HAL_GetTick() - timestamp > 5000)
+				if (HAL_GetTick() - timestamp > BLOCK_PERIOD)
 				{
 					state = STATE_INIT;
 					HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);

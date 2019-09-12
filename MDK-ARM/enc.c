@@ -23,8 +23,19 @@ static uint8_t false_cnt = 0;
 static uint16_t encoder_value = 1;
 
 // main variable for storing lock code value
-static uint16_t lock_value = 0x01 << 13;
+static uint16_t lock_value[] = {0x01 << 13, 0x01 << 13, 0x01 << 13};
 
+/**
+* Flashing diodes on encoder click in NO RHYTHM, just turn them off for god's sake
+*/
+void enc_leds_off(void)
+{
+	uint8_t data[] = {0x0, 0x0};
+	
+	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi2, data, 2, 1000);
+	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_SET);
+}
 
 /**
 * Flashing diodes on encoder click in successful rhythm
@@ -34,7 +45,7 @@ void enc_flash_success(void)
 	uint8_t data[] = {0xFF, 0xFF};
 	
 	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_RESET);
-	HAL_SPI_Transmit(&hspi2, data, 2, 1000);																// default LED turn on
+	HAL_SPI_Transmit(&hspi2, data, 2, 1000);
 	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_SET);
 	
 	HAL_Delay(200);
@@ -43,7 +54,7 @@ void enc_flash_success(void)
 	data[1] = 0x00;
 	
 	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_RESET);
-	HAL_SPI_Transmit(&hspi2, data, 2, 1000);																// default LED turn on
+	HAL_SPI_Transmit(&hspi2, data, 2, 1000);
 	HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_SET);
 	
 	HAL_Delay(200);
@@ -129,8 +140,9 @@ uint8_t enc_event_check(void)
 
 /**
 * Processes event that occured - encoder rotation or button push
+* @param lock_order Unsigned byte that selects current lock
 */
-void enc_process_event(void)
+void enc_process_event(uint8_t lock_order)
 {
 	uint8_t data[2] = {0,1};
 	
@@ -167,7 +179,7 @@ void enc_process_event(void)
 	
 	if (button_pushed)
 	{
-		if (check_valid_combination(encoder_value))
+		if (check_valid_combination(encoder_value, lock_order))
 		{
 			buzz_set_type(BUZZ_TYPE_SUCCESS);
 			buzz(SOURCE_NOT_IT);
@@ -182,20 +194,33 @@ void enc_process_event(void)
 }
 
 /**
+* Set lock combination 
+* @param lock1 Value for lock1 set
+* @param lock2 Value for lock2 set
+* @param lock3 Value for lock3 set
+*/
+void set_lock_combination(uint16_t lock1, uint16_t lock2, uint16_t lock3)
+{
+	lock_value[0] = lock1;
+	lock_value[1] = lock2;
+	lock_value[2] = lock3;
+}
+
+/**
 * Checking if encoder value is the same as lock combination 
 * @param value Unsigned word in one-hot coding (0x0001, 0x0002, 0x0004 ... 0x4000, 0x8000)
+* @param lock_order Unsigned byte that selects current lock
 * @return TRUE (1) on match with set lock combination, FALSE (0) otherwise
 */
-uint8_t check_valid_combination(uint16_t value)
+uint8_t check_valid_combination(uint16_t value, uint8_t lock_order)
 {
-#warning "three-stage lock to be implemented"
-	if(lock_value == value)
+	if(lock_value[lock_order] == value)
 	{
 		unlocked = TRUE;
 	  false_cnt = 0;
 		return TRUE;
 	}
-	else if(false_cnt >= 4)
+	else if(false_cnt >= BLOCK_FAIL_COUNT)
 	{
 		blocked = TRUE;
 		false_cnt = 0;

@@ -14,6 +14,7 @@
 #include "gpio.h"
 #include "buzzer.h"
 
+void enc_leds_off(void);
 void enc_flash_success(void);
 void enc_flash_fail(void);
 
@@ -21,9 +22,9 @@ void enc_get_value(uint8_t *value_of_encoder);
 
 void enc_init(void);
 uint8_t enc_event_check(void);
-void enc_process_event(void);
+void enc_process_event(uint8_t lock_order);
 
-uint8_t check_valid_combination(uint16_t value);
+uint8_t check_valid_combination(uint16_t value, uint8_t lock_order);
 
 uint8_t enc_is_unlocked(void);
 uint8_t enc_is_blocked(void);
