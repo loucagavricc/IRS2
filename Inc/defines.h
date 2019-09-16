@@ -40,14 +40,16 @@
 #define BUZZ_TYPE_FAIL			(uint8_t) 0
 
 // MACROs to be used as a state machine states
+#define STATE_RESET				(uint8_t) 8
 #define STATE_INIT				(uint8_t) 0
+#define STATE_SET_COMB		(uint8_t) 7
 #define STATE_FIRST_LOCK	(uint8_t) 1
 #define STATE_SECOND_LOCK	(uint8_t) 2
 #define STATE_THIRD_LOCK	(uint8_t) 3
 #define STATE_UNLOCK_1		(uint8_t) 4
 #define STATE_UNLOCK_2		(uint8_t) 5
-#define STATE_BLOCK				(uint8_t) 6
-#define STATE_SET_COMB		(uint8_t) 7
+#define STATE_BLOCK_1			(uint8_t) 6
+#define STATE_BLOCK_2			(uint8_t) 9
 
 // MACROs for PC commands received by UART
 #define PC_CMD_START			(uint8_t) 0xA5

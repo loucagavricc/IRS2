@@ -13,8 +13,12 @@
 #include "stdio.h"
 #include "defines.h"
 
+uint8_t pc_uart_check_rx(void);
+void pc_uart_rx(uint8_t rx_count);
+
 uint8_t pc_uart_rx_cmd(void);
 uint8_t pc_init_lock(void);
+uint8_t pc_init_lock_status(void);
 
 uint8_t pc_uart_tx(char* string);
 
