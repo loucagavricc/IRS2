@@ -4,6 +4,7 @@
 * Author: Luka Gavric 2018/3194
 *
 */
+
 #ifndef BUZZER_C
 #define BUZZER_C
 

@@ -4,6 +4,7 @@
 * Author: Luka Gavric 2018/3194
 *
 */
+
 #ifndef DEFINES_H
 #define DEFINES_H
 

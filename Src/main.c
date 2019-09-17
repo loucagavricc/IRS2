@@ -50,8 +50,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-extern SPI_HandleTypeDef hspi2;
-extern UART_HandleTypeDef huart2;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -112,8 +111,8 @@ int main(void)
 	
 	while (1)
 	{
-		
-		switch (state)			// MAIN STATE MACHINE
+/****** MAIN STATE MACHINE ***************/		
+		switch (state)			
 		{
 /******** RESET **************************/			
 			case STATE_RESET:
@@ -132,7 +131,7 @@ int main(void)
 				break;
 				
 /******** INITIALIZING *******************/			
-			case STATE_INIT:	// STATE FOR INITIALIZATION
+			case STATE_INIT:
 				if ( pc_uart_check_rx() == FALSE )
 					break;
 				else
@@ -178,7 +177,7 @@ int main(void)
 				break;
 				
 /******* UNLOCKING LOCK BY LOCK **********/				
-			case STATE_FIRST_LOCK:			// STATES FOR UNLOCKING LOCKS
+			case STATE_FIRST_LOCK:
 			case STATE_SECOND_LOCK:
 			case STATE_THIRD_LOCK:
 					
@@ -187,10 +186,11 @@ int main(void)
 					enc_process_event(state-STATE_FIRST_LOCK);	// process event that happened
 					
 					enc_get_value(&encoder_value);
+					
 					sprintf(message, "\rLock %d: %2d", state-STATE_FIRST_LOCK+1, encoder_value);
 					while( pc_uart_tx(message) == RET_FAIL );
 					
-					if (enc_is_unlocked())
+					if (enc_is_unlocked())	// if successfully unlocked, move on
 					{
 						state++;
 						while ( pc_uart_tx(" successfully unlocked\r\n") == RET_FAIL );
@@ -201,7 +201,7 @@ int main(void)
 						}
 					}
 					
-					else if (enc_is_blocked())
+					else if (enc_is_blocked())	// if limit of number of failed attemts reached
 					{
 						state = STATE_BLOCK_1;
 					}

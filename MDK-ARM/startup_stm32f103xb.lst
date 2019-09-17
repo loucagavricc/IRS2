@@ -463,11 +463,10 @@ ARM Macro Assembler    Page 8
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M3 --apcs=interw
 ork --depend=buzzing\startup_stm32f103xb.d -obuzzing\startup_stm32f103xb.o -I.\
-RTE\_buzzing -IC:\Users\louca\AppData\Local\Arm\Packs\ARM\CMSIS\5.5.1\CMSIS\Cor
-e\Include -IC:\Users\louca\AppData\Local\Arm\Packs\Keil\STM32F1xx_DFP\2.3.0\Dev
-ice\Include --predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 1" --prede
-fine="__UVISION_VERSION SETA 528" --predefine="_RTE_ SETA 1" --predefine="STM32
-F10X_MD SETA 1" --list=startup_stm32f103xb.lst startup_stm32f103xb.s
+RTE\_buzzing -IC:\Keil_v5\ARM\PACK\ARM\CMSIS\5.3.0\CMSIS\Include -IC:\Keil_v5\A
+RM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include --predefine="__MICROLIB SETA 1"
+ --predefine="__UVISION_VERSION SETA 525" --predefine="_RTE_ SETA 1" --predefin
+e="STM32F10X_MD SETA 1" --list=startup_stm32f103xb.lst startup_stm32f103xb.s
 
 
 
@@ -1174,4 +1173,4 @@ Symbol: __main
       At line 135 in file startup_stm32f103xb.s
 Comment: __main used once
 2 symbols
-407 symbols in table
+406 symbols in table
